@@ -2,3 +2,4 @@ admin.html
 node_modules
 dist
 *.log
+dist-app
