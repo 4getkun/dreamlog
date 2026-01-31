@@ -1,0 +1,328 @@
+<!doctype html>
+<html lang="en">
+  <head>
+    <meta charset="utf-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1" />
+    <title>Dream Log Editor</title>
+    <style>
+      :root {
+        --bg: #f3efe6;
+        --ink: #1e1b16;
+        --muted: #6f665a;
+        --panel: #fffaf1;
+        --accent: #007a6f;
+        --danger: #b23b3b;
+      }
+      * { box-sizing: border-box; }
+      body {
+        margin: 0;
+        font-family: "Verdana", "Geneva", sans-serif;
+        background: linear-gradient(160deg, #fff3db 0%, #f3efe6 60%);
+        color: var(--ink);
+      }
+      header {
+        padding: 24px 16px 8px;
+        text-align: center;
+      }
+      header h1 { margin: 0; }
+      header p { margin: 8px 0 0; color: var(--muted); }
+      main { max-width: 980px; margin: 0 auto; padding: 16px; }
+      .grid {
+        display: grid;
+        grid-template-columns: 1fr;
+        gap: 16px;
+      }
+      @media (min-width: 900px) {
+        .grid { grid-template-columns: 1fr 1.2fr; }
+      }
+      .panel {
+        background: var(--panel);
+        border: 1px solid #e5d7c1;
+        border-radius: 14px;
+        padding: 18px;
+        box-shadow: 0 6px 16px rgba(0, 0, 0, 0.05);
+      }
+      label { display: block; font-size: 13px; color: var(--muted); margin-top: 10px; }
+      input, textarea {
+        width: 100%;
+        border: 1px solid #d9cbb7;
+        border-radius: 10px;
+        padding: 10px 12px;
+        background: #fffefb;
+        font-size: 14px;
+        color: var(--ink);
+      }
+      textarea { min-height: 180px; resize: vertical; }
+      .row { display: flex; gap: 8px; flex-wrap: wrap; margin-top: 12px; }
+      button {
+        border: none;
+        padding: 10px 16px;
+        border-radius: 999px;
+        cursor: pointer;
+        background: var(--accent);
+        color: white;
+        font-weight: 600;
+      }
+      button.secondary { background: #333; }
+      button.ghost { background: transparent; color: var(--accent); border: 1px solid var(--accent); }
+      button.danger { background: var(--danger); }
+      .list-item {
+        border-bottom: 1px dashed #d8c8b1;
+        padding: 10px 0;
+      }
+      .list-item h3 { margin: 0 0 4px; font-size: 16px; }
+      .list-item small { color: var(--muted); }
+      .count {
+        font-weight: 600;
+        color: var(--accent);
+      }
+      .hint { color: var(--muted); font-size: 12px; margin-top: 6px; }
+      .top-actions { text-align: center; margin-top: 10px; }
+      .top-actions a { color: var(--accent); text-decoration: none; }
+      @media (max-width: 680px) {
+        body { font-size: 15px; line-height: 1.6; }
+        header h1 { font-size: 22px; }
+        main { padding: 12px; }
+        .grid { grid-template-columns: 1fr; }
+        .panel { padding: 14px; }
+        input, textarea { font-size: 16px; }
+        button { width: 100%; }
+        .row { gap: 10px; }
+      }
+    </style>
+  </head>
+  <body>
+    <header>
+      <h1>Dream Log Editor</h1>
+      <p>Add posts locally, then export JSON or generate static pages every 20 posts.</p>
+      <div class="top-actions"><a href="index.html">Back to list</a></div>
+    </header>
+    <main>
+      <div class="grid">
+        <section class="panel">
+          <h2>New / Edit</h2>
+          <label>Title</label>
+          <input id="title" type="text" placeholder="Short title" />
+          <label>Date</label>
+          <input id="date" type="date" />
+          <label>Body</label>
+          <textarea id="body" placeholder="Write your dream memo..."></textarea>
+          <div class="row">
+            <button id="save">Save post</button>
+            <button id="reset" class="ghost">Reset form</button>
+            <button id="clear" class="danger">Clear all (local only)</button>
+          </div>
+          <p class="hint">All drafts are stored in your browser only (localStorage).</p>
+        </section>
+        <section class="panel">
+          <h2>Posts <span class="count" id="count">0</span></h2>
+          <div id="list"></div>
+          <div class="row">
+            <button id="export" class="secondary">Export posts.json</button>
+            <button id="generate">Generate static pages</button>
+          </div>
+          <p class="hint">Static pages: index.html (page 1), page-2.html, page-3.html ...</p>
+        </section>
+      </div>
+    </main>
+    <script>
+      const STORAGE_KEY = "dreamlog.posts";
+      const PAGE_SIZE = 20;
+      const titleEl = document.getElementById("title");
+      const dateEl = document.getElementById("date");
+      const bodyEl = document.getElementById("body");
+      const listEl = document.getElementById("list");
+      const countEl = document.getElementById("count");
+      const saveBtn = document.getElementById("save");
+      const resetBtn = document.getElementById("reset");
+      const clearBtn = document.getElementById("clear");
+      const exportBtn = document.getElementById("export");
+      const generateBtn = document.getElementById("generate");
+
+      let editingId = null;
+
+      function loadPosts() {
+        try {
+          return JSON.parse(localStorage.getItem(STORAGE_KEY) || "[]");
+        } catch {
+          return [];
+        }
+      }
+
+      function savePosts(posts) {
+        localStorage.setItem(STORAGE_KEY, JSON.stringify(posts));
+      }
+
+      function resetForm() {
+        editingId = null;
+        titleEl.value = "";
+        bodyEl.value = "";
+        dateEl.valueAsDate = new Date();
+      }
+
+      function renderList() {
+        const posts = loadPosts();
+        countEl.textContent = posts.length;
+        listEl.innerHTML = posts
+          .map((post) => {
+            return `
+              <div class="list-item" data-id="${post.id}">
+                <h3>${post.title || "Untitled"}</h3>
+                <small>${post.date || ""}</small>
+                <div class="row">
+                  <button class="ghost edit">Edit</button>
+                  <button class="danger delete">Delete</button>
+                </div>
+              </div>
+            `;
+          })
+          .join("");
+      }
+
+      function addOrUpdatePost() {
+        const posts = loadPosts();
+        const title = titleEl.value.trim();
+        const body = bodyEl.value.trim();
+        const date = dateEl.value;
+        if (!title && !body) return;
+
+        if (editingId) {
+          const idx = posts.findIndex((p) => p.id === editingId);
+          if (idx !== -1) {
+            posts[idx] = { ...posts[idx], title, body, date };
+          }
+        } else {
+          posts.unshift({
+            id: `p-${Date.now()}`,
+            title,
+            body,
+            date,
+          });
+        }
+        savePosts(posts);
+        resetForm();
+        renderList();
+      }
+
+      function handleListClick(e) {
+        const target = e.target;
+        const wrap = target.closest(".list-item");
+        if (!wrap) return;
+        const posts = loadPosts();
+        const post = posts.find((p) => p.id === wrap.dataset.id);
+        if (!post) return;
+
+        if (target.classList.contains("edit")) {
+          editingId = post.id;
+          titleEl.value = post.title || "";
+          bodyEl.value = post.body || "";
+          dateEl.value = post.date || "";
+        }
+        if (target.classList.contains("delete")) {
+          const next = posts.filter((p) => p.id !== post.id);
+          savePosts(next);
+          renderList();
+        }
+      }
+
+      function downloadFile(filename, content) {
+        const blob = new Blob([content], { type: "text/plain" });
+        const link = document.createElement("a");
+        link.href = URL.createObjectURL(blob);
+        link.download = filename;
+        document.body.appendChild(link);
+        link.click();
+        link.remove();
+        URL.revokeObjectURL(link.href);
+      }
+
+      function exportJson() {
+        const posts = loadPosts().map(({ id, ...rest }) => rest);
+        downloadFile("posts.json", JSON.stringify(posts, null, 2));
+      }
+
+      function pageTemplate(pageIndex, totalPages, pagePosts) {
+        const nav = Array.from({ length: totalPages }, (_, i) => {
+          const num = i + 1;
+          const href = num === 1 ? "index.html" : `page-${num}.html`;
+          return `<a href="${href}" ${num === pageIndex ? 'class="active"' : ""}>Page ${num}</a>`;
+        }).join("");
+
+        const items = pagePosts.map((post) => {
+          const safeBody = (post.body || "").replace(/</g, "&lt;").replace(/>/g, "&gt;");
+          return `
+            <div class="entry">
+              <h2>${post.title || "Untitled"}</h2>
+              <br>
+              <div>${safeBody.replace(/\\n/g, "<br>")}</div>
+            </div>
+          `;
+        });
+        const separator = "<br><br><br><hr><br><br><br>";
+        const itemsHtml = items.length ? items.join(separator) : '<div style="text-align:center;color:#6b6258;">No posts yet.</div>';
+
+        return `<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1" />
+  <title>Dream Log - Page ${pageIndex}</title>
+  <style>
+    :root { --bg:#f6f2ea; --ink:#1f1c16; --muted:#6b6258; --card:#fffaf2; --accent:#2b6cb0; }
+    * { box-sizing:border-box; }
+    body { margin:0; font-family: "Georgia","Times New Roman",serif; color:var(--ink); background: radial-gradient(circle at 20% 10%, #fff7e6, var(--bg)); }
+    header { padding: 32px 16px 8px; text-align:center; }
+    header h1 { margin:0; }
+    main { max-width: 860px; margin:0 auto; padding:16px; }
+    .entry h2 { margin:0 0 6px; font-size:22px; }
+    hr { border:none; border-top:1px solid #dccfb9; }
+    .nav { display:flex; gap:8px; flex-wrap:wrap; justify-content:center; margin:18px 0 28px; }
+    .nav a { text-decoration:none; color:var(--ink); border:1px solid #dccfb9; padding:6px 12px; border-radius:999px; background:#fffefb; }
+    .nav a.active { background:var(--accent); color:white; border-color:var(--accent); }
+  </style>
+</head>
+<body>
+  <header>
+    <h1>Dream Log</h1>
+    <p>Page ${pageIndex} of ${totalPages}</p>
+  </header>
+  <main>
+    ${itemsHtml}
+  </main>
+  <div class="nav">${nav}</div>
+</body>
+</html>`;
+      }
+
+      function generatePages() {
+        const posts = loadPosts().map(({ id, ...rest }) => rest);
+        posts.sort((a, b) => (b.date || "").localeCompare(a.date || ""));
+        const totalPages = Math.max(1, Math.ceil(posts.length / PAGE_SIZE));
+        for (let i = 0; i < totalPages; i += 1) {
+          const pageIndex = i + 1;
+          const pagePosts = posts.slice(i * PAGE_SIZE, i * PAGE_SIZE + PAGE_SIZE);
+          const html = pageTemplate(pageIndex, totalPages, pagePosts);
+          const filename = pageIndex === 1 ? "index.html" : `page-${pageIndex}.html`;
+          downloadFile(filename, html);
+        }
+      }
+
+      saveBtn.addEventListener("click", addOrUpdatePost);
+      resetBtn.addEventListener("click", resetForm);
+      clearBtn.addEventListener("click", () => {
+        localStorage.removeItem(STORAGE_KEY);
+        resetForm();
+        renderList();
+      });
+      exportBtn.addEventListener("click", exportJson);
+      generateBtn.addEventListener("click", generatePages);
+      listEl.addEventListener("click", handleListClick);
+
+      resetForm();
+      renderList();
+    </script>
+  </body>
+</html>
+
+
+

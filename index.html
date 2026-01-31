@@ -1,0 +1,142 @@
+<!doctype html>
+<html lang="en">
+  <head>
+    <meta charset="utf-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1" />
+    <title>Dream Log</title>
+    <style>
+      :root {
+        --bg: #f6f2ea;
+        --ink: #1f1c16;
+        --muted: #6b6258;
+        --card: #fffaf2;
+        --accent: #2b6cb0;
+      }
+      * { box-sizing: border-box; }
+      body {
+        margin: 0;
+        font-family: "Georgia", "Times New Roman", serif;
+        color: var(--ink);
+        background: radial-gradient(circle at 20% 10%, #fff7e6, var(--bg));
+      }
+      header {
+        padding: 28px 16px 6px;
+        text-align: center;
+      }
+      header h1 { margin: 0; letter-spacing: 1px; }
+      header p { margin: 8px 0 0; color: var(--muted); }
+      main { max-width: 860px; margin: 28px auto 0; padding: 16px; }
+      .entry h2 { margin: 0 0 6px; font-size: 22px; }
+      .meta { color: var(--muted); font-size: 14px; margin-bottom: 8px; }
+      hr {
+        border: none;
+        border-top: 1px solid #dccfb9;
+      }
+      .nav {
+        display: flex;
+        gap: 8px;
+        flex-wrap: wrap;
+        justify-content: center;
+        margin: 18px 0 28px;
+      }
+      .nav a {
+        text-decoration: none;
+        color: var(--ink);
+        border: 1px solid #dccfb9;
+        padding: 6px 12px;
+        border-radius: 999px;
+        background: #fffefb;
+      }
+      .nav a.active { background: var(--accent); color: white; border-color: var(--accent); }
+      .empty {
+        text-align: center;
+        color: var(--muted);
+        padding: 48px 12px;
+      }
+      @media (max-width: 680px) {
+        body { font-size: 16px; line-height: 1.7; }
+        header { padding: 20px 12px 4px; }
+        header h1 { font-size: 24px; }
+        main { margin-top: 20px; padding: 12px; }
+        .entry h2 { font-size: 19px; }
+        .nav { margin: 12px 0 20px; }
+        .nav a { padding: 6px 10px; font-size: 13px; }
+      }
+      footer {
+        text-align: center;
+        color: var(--muted);
+        font-size: 12px;
+        padding: 20px 12px 32px;
+      }
+      .actions { text-align: center; margin-top: 12px; }
+      .actions a { color: var(--accent); text-decoration: none; }
+    </style>
+  </head>
+  <body>
+    <header>
+      <h1>Dream Log</h1>
+    </header>
+    <main id="list"></main>
+    <div class="nav" id="nav"></div>
+    <script>
+      const PAGE_SIZE = 20;
+      const listEl = document.getElementById("list");
+      const navEl = document.getElementById("nav");
+
+      function getPageParam() {
+        const p = parseInt(new URLSearchParams(location.search).get("page") || "1", 10);
+        return Number.isNaN(p) || p < 1 ? 1 : p;
+      }
+
+      function renderNav(totalPages, page) {
+        navEl.innerHTML = "";
+        for (let i = 1; i <= totalPages; i += 1) {
+          const link = document.createElement("a");
+          link.href = i === 1 ? "index.html" : `index.html?page=${i}`;
+          link.textContent = `Page ${i}`;
+          if (i === page) link.classList.add("active");
+          navEl.appendChild(link);
+        }
+      }
+
+      function renderPosts(posts) {
+        if (posts.length === 0) {
+          listEl.innerHTML = '<div class="empty">No posts yet. Use the editor to add entries.</div>';
+          return;
+        }
+        const parts = posts.map((post) => {
+          const safeBody = (post.body || "").replace(/</g, "&lt;").replace(/>/g, "&gt;");
+          return `
+            <div class="entry">
+              <h2>${post.title || "Untitled"}</h2>
+              <br>
+              <div>${safeBody.replace(/\n/g, "<br>")}</div>
+            </div>
+          `;
+        });
+        const separator = "<br><br><br><hr><br><br><br>";
+        listEl.innerHTML = parts.join(separator);
+      }
+
+      async function load() {
+        let posts = [];
+        try {
+          const res = await fetch(`posts.json?ts=${Date.now()}`);
+          posts = await res.json();
+        } catch (err) {
+          listEl.innerHTML = '<div class="empty">posts.json not found. Generate or upload it first.</div>';
+          navEl.innerHTML = "";
+          return;
+        }
+        posts.sort((a, b) => (b.date || "").localeCompare(a.date || ""));
+        const page = getPageParam();
+        const totalPages = Math.max(1, Math.ceil(posts.length / PAGE_SIZE));
+        const start = (page - 1) * PAGE_SIZE;
+        renderPosts(posts.slice(start, start + PAGE_SIZE));
+        renderNav(totalPages, Math.min(page, totalPages));
+      }
+
+      load();
+    </script>
+  </body>
+</html>
