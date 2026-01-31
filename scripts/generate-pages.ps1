@@ -34,17 +34,42 @@ function PageTemplate([int]$pageIndex, [int]$totalPages, $pagePosts) {
     $nav += "<a href=`"$href`" class=`"$active`">Page $i</a>"
   }
 
+  function FormatPostedAt([string]$dateStr) {
+    if ([string]::IsNullOrWhiteSpace($dateStr)) { return "" }
+    try {
+      $d = [datetime]::Parse($dateStr)
+      return "posted at {0}年{1}月{2}日" -f $d.Year, $d.Month, $d.Day
+    } catch {
+      return ""
+    }
+  }
+
+  function StripPostedAt([string]$text) {
+    if ($null -eq $text) { return "" }
+    $lines = $text -split "(`r`n|`n|`r)"
+    $kept = @()
+    foreach ($line in $lines) {
+      if ($line.Trim() -match '^posted at\s+') { continue }
+      $kept += $line
+    }
+    return ($kept -join "`n")
+  }
+
   $entries = @()
   foreach ($post in $pagePosts) {
     $title = EscapeHtml $post.title
     if ([string]::IsNullOrWhiteSpace($title)) { $title = "Untitled" }
-    $body = EscapeHtml $post.body
+    $body = StripPostedAt $post.body
+    $body = EscapeHtml $body
     $body = $body -replace "`r`n|`n|`r", "<br>"
+    $postedAt = EscapeHtml (FormatPostedAt $post.date)
+    $postedAtHtml = if ($postedAt) { "<br><div>$postedAt</div>" } else { "" }
     $entries += @"
 <div class="entry">
   <h2>$title</h2>
   <br>
   <div>$body</div>
+  $postedAtHtml
 </div>
 "@
   }

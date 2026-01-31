@@ -104,13 +104,29 @@
           listEl.innerHTML = '<div class="empty">No posts yet. Use the editor to add entries.</div>';
           return;
         }
+        const formatPostedAt = (dateStr) => {
+          if (!dateStr) return "";
+          const d = new Date(dateStr);
+          if (Number.isNaN(d.getTime())) return "";
+          return `posted at ${d.getFullYear()}年${d.getMonth() + 1}月${d.getDate()}日`;
+        };
+        const stripPostedAt = (text) => {
+          if (!text) return "";
+          return text
+            .split("\n")
+            .filter((line) => !/^posted at\s+/i.test(line.trim()))
+            .join("\n");
+        };
         const parts = posts.map((post) => {
-          const safeBody = (post.body || "").replace(/</g, "&lt;").replace(/>/g, "&gt;");
+          const body = stripPostedAt(post.body || "");
+          const safeBody = body.replace(/</g, "&lt;").replace(/>/g, "&gt;");
+          const postedAt = formatPostedAt(post.date || "");
           return `
             <div class="entry">
               <h2>${post.title || "Untitled"}</h2>
               <br>
               <div>${safeBody.replace(/\n/g, "<br>")}</div>
+              ${postedAt ? `<br><div>${postedAt}</div>` : ""}
             </div>
           `;
         });
