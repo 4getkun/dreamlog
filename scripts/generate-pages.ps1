@@ -18,7 +18,7 @@ if ($null -eq $posts) { $posts = @() }
 
 $posts = $posts | Sort-Object -Property date -Descending
 
-$pageSize = 20
+$pageSize = 15
 $totalPages = [Math]::Max(1, [int][Math]::Ceiling($posts.Count / $pageSize))
 
 function EscapeHtml([string]$text) {
