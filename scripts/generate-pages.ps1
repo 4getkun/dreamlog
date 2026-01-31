@@ -49,8 +49,9 @@ function PageTemplate([int]$pageIndex, [int]$totalPages, $pagePosts) {
 "@
   }
 
-  $separator = "<br><br><br><hr><br><br><br>"
-  $content = if ($entries.Count -gt 0) { $entries -join $separator } else { "<div class=`"empty`">No posts yet.</div>" }
+  $separator = "<br><hr><br>"
+  $topRule = "<hr><br>"
+  $content = if ($entries.Count -gt 0) { $topRule + ($entries -join $separator) } else { "<div class=`"empty`">No posts yet.</div>" }
 
   return @"
 <!doctype html>
