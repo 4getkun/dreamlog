@@ -114,8 +114,9 @@
             </div>
           `;
         });
-        const separator = "<br><br><br><hr><br><br><br>";
-        listEl.innerHTML = parts.join(separator);
+        const separator = "<br><hr><br>";
+        const topRule = "<hr><br>";
+        listEl.innerHTML = parts.length ? topRule + parts.join(separator) : "";
       }
 
       async function load() {
