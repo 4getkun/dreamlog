@@ -21,9 +21,6 @@ jobs:
       - name: Checkout
         uses: actions/checkout@v4
 
-      - name: Setup PowerShell
-        uses: PowerShell/PowerShell@v1
-
       - name: Generate pages
         shell: pwsh
         run: ./scripts/generate-pages.ps1
