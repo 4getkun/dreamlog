@@ -120,12 +120,18 @@
         const parts = posts.map((post) => {
           const body = stripPostedAt(post.body || "");
           const safeBody = body.replace(/</g, "&lt;").replace(/>/g, "&gt;");
+          const bodyHtml = safeBody
+            .replace(/\r\n/g, "\n")
+            .replace(/\n{2,}/g, "\n\n")
+            .replace(/\n\n/g, "__P__")
+            .replace(/\n/g, " ")
+            .replace(/__P__/g, "<br><br>");
           const postedAt = formatPostedAt(post.date || "");
           return `
             <div class="entry">
               <h2>${post.title || "Untitled"}</h2>
               <br>
-              <div>${safeBody.replace(/\n/g, "<br>")}</div>
+              <div>${bodyHtml}</div>
               ${postedAt ? `<br><div>${postedAt}</div>` : ""}
             </div>
           `;

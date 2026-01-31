@@ -61,7 +61,12 @@ function PageTemplate([int]$pageIndex, [int]$totalPages, $pagePosts) {
     if ([string]::IsNullOrWhiteSpace($title)) { $title = "Untitled" }
     $body = StripPostedAt $post.body
     $body = EscapeHtml $body
-    $body = $body -replace "`r`n|`n|`r", "<br>"
+    $body = $body -replace "`r`n", "`n"
+    $body = $body -replace "`r", "`n"
+    $body = $body -replace "(`n){2,}", "`n`n"
+    $body = $body -replace "`n`n", "__P__"
+    $body = $body -replace "`n", " "
+    $body = $body -replace "__P__", "<br><br>"
     $postedAt = EscapeHtml (FormatPostedAt $post.date)
     $postedAtHtml = if ($postedAt) { "<br><div>$postedAt</div>" } else { "" }
     $entries += @"
