@@ -16,7 +16,8 @@ New-Item -ItemType Directory -Path $outDir | Out-Null
 $posts = Get-Content -Raw $postsPath | ConvertFrom-Json
 if ($null -eq $posts) { $posts = @() }
 
-  $today = Get-Date
+  $tz = [System.TimeZoneInfo]::FindSystemTimeZoneById("Tokyo Standard Time")
+  $today = [System.TimeZoneInfo]::ConvertTime((Get-Date), $tz).Date
   $posts = $posts | Where-Object {
     if (-not $_.date) { return $true }
     try { (Get-Date $_.date) -le $today } catch { $true }
