@@ -159,4 +159,7 @@ for ($i = 0; $i -lt $totalPages; $i += 1) {
   Set-Content -Path $outPath -Value $html -Encoding UTF8
 }
 
+Copy-Item (Join-Path $repoRoot "lyric.html") (Join-Path $outDir "lyric.html") -Force
+Copy-Item (Join-Path $repoRoot "lyrics.json") (Join-Path $outDir "lyrics.json") -Force
+
 Write-Output "Generated $totalPages page(s) into $outDir"
