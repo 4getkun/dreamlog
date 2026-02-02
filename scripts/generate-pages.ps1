@@ -16,7 +16,11 @@ New-Item -ItemType Directory -Path $outDir | Out-Null
 $posts = Get-Content -Raw $postsPath | ConvertFrom-Json
 if ($null -eq $posts) { $posts = @() }
 
-$posts = $posts | Sort-Object -Property date -Descending
+  $today = Get-Date
+  $posts = $posts | Where-Object {
+    if (-not $_.date) { return $true }
+    try { (Get-Date $_.date) -le $today } catch { $true }
+  } | Sort-Object -Property date -Descending
 
 $pageSize = 15
 $totalPages = [Math]::Max(1, [int][Math]::Ceiling($posts.Count / $pageSize))

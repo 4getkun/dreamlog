@@ -163,6 +163,8 @@
           navEl.innerHTML = "";
           return;
         }
+        const todayStr = new Date().toISOString().slice(0, 10);
+        posts = posts.filter((p) => !p.date || p.date <= todayStr);
         posts.sort((a, b) => (b.date || "").localeCompare(a.date || ""));
         const page = getPageParam();
         const totalPages = Math.max(1, Math.ceil(posts.length / PAGE_SIZE));
