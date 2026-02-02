@@ -3,7 +3,7 @@
   <head>
     <meta charset="utf-8" />
     <meta name="viewport" content="width=device-width, initial-scale=1" />
-    <title>Dream Log</title>
+    <title>Lyric Log</title>
     <style>
       :root {
         --bg: #f6f2ea;
@@ -24,14 +24,10 @@
         text-align: center;
       }
       header h1 { margin: 0; letter-spacing: 1px; }
-      header p { margin: 8px 0 0; color: var(--muted); }
       main { max-width: 860px; margin: 28px auto 0; padding: 16px; }
       .entry h2 { margin: 0 0 6px; font-size: 22px; }
       .meta { color: var(--muted); font-size: 14px; margin-bottom: 8px; }
-      hr {
-        border: none;
-        border-top: 1px solid #dccfb9;
-      }
+      hr { border: none; border-top: 1px solid #dccfb9; }
       .nav {
         display: flex;
         gap: 8px;
@@ -62,19 +58,11 @@
         .nav { margin: 12px 0 20px; }
         .nav a { padding: 6px 10px; font-size: 13px; }
       }
-      footer {
-        text-align: center;
-        color: var(--muted);
-        font-size: 12px;
-        padding: 20px 12px 32px;
-      }
-      .actions { text-align: center; margin-top: 12px; }
-      .actions a { color: var(--accent); text-decoration: none; }
     </style>
   </head>
   <body>
     <header>
-      <h1>Dream Log</h1>
+      <h1>Lyric Log</h1>
     </header>
     <main id="list"></main>
     <div class="nav" id="nav"></div>
@@ -119,7 +107,7 @@
             return;
           }
           const link = document.createElement("a");
-          link.href = item === 1 ? "index.html" : `index.html?page=${item}`;
+          link.href = item === 1 ? "lyric.html" : `lyric.html?page=${item}`;
           link.textContent = `Page ${item}`;
           if (item === page) link.classList.add("active");
           navEl.appendChild(link);
@@ -128,7 +116,7 @@
 
       function renderPosts(posts) {
         if (posts.length === 0) {
-          listEl.innerHTML = '<div class="empty">No posts yet. Use the editor to add entries.</div>';
+          listEl.innerHTML = '<div class="empty">No lyrics yet.</div>';
           return;
         }
         const formatPostedAt = (dateStr) => {
@@ -149,10 +137,7 @@
           const safeBody = body.replace(/</g, "&lt;").replace(/>/g, "&gt;");
           const bodyHtml = safeBody
             .replace(/\r\n/g, "\n")
-            .replace(/\n{2,}/g, "\n\n")
-            .replace(/\n\n/g, "__P__")
-            .replace(/\n/g, " ")
-            .replace(/__P__/g, "<br><br>");
+            .replace(/\n/g, "<br>");
           const postedAt = formatPostedAt(post.date || "");
           return `
             <div class="entry">
@@ -171,10 +156,10 @@
       async function load() {
         let posts = [];
         try {
-          const res = await fetch(`posts.json?ts=${Date.now()}`);
+          const res = await fetch(`lyrics.json?ts=${Date.now()}`);
           posts = await res.json();
         } catch (err) {
-          listEl.innerHTML = '<div class="empty">posts.json not found. Generate or upload it first.</div>';
+          listEl.innerHTML = '<div class="empty">lyrics.json not found.</div>';
           navEl.innerHTML = "";
           return;
         }

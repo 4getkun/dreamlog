@@ -27,11 +27,34 @@ function EscapeHtml([string]$text) {
 }
 
 function PageTemplate([int]$pageIndex, [int]$totalPages, $pagePosts) {
+  function BuildPageItems([int]$total, [int]$current) {
+    if ($total -le 11) { return 1..$total }
+    $items = New-Object System.Collections.Generic.List[int]
+    $items.Add(1)
+    $items.Add($total)
+    for ($i = $current - 2; $i -le $current + 2; $i += 1) {
+      if ($i -gt 1 -and $i -lt $total -and -not $items.Contains($i)) { $items.Add($i) }
+    }
+    $items = $items | Sort-Object
+    $out = New-Object System.Collections.Generic.List[object]
+    $prev = $null
+    foreach ($n in $items) {
+      if ($prev -and $n - $prev -gt 1) { $out.Add("…") }
+      $out.Add($n)
+      $prev = $n
+    }
+    return $out
+  }
+
   $nav = ""
-  for ($i = 1; $i -le $totalPages; $i += 1) {
-    $href = if ($i -eq 1) { "index.html" } else { "page-$i.html" }
-    $active = if ($i -eq $pageIndex) { "active" } else { "" }
-    $nav += "<a href=`"$href`" class=`"$active`">Page $i</a>"
+  foreach ($item in (BuildPageItems $totalPages $pageIndex)) {
+    if ($item -eq "…") {
+      $nav += "<span style=`"padding:6px 8px;`">…</span>"
+      continue
+    }
+    $href = if ($item -eq 1) { "index.html" } else { "page-$item.html" }
+    $active = if ($item -eq $pageIndex) { "active" } else { "" }
+    $nav += "<a href=`"$href`" class=`"$active`">Page $item</a>"
   }
 
   function FormatPostedAt([string]$dateStr) {
