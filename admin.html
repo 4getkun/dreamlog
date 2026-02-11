@@ -1,0 +1,136 @@
+<!doctype html>
+<html lang="en">
+  <head>
+    <meta charset="utf-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1" />
+    <title>Dream Log Editor</title>
+    <style>
+      :root {
+        --bg: #f3efe6;
+        --ink: #1e1b16;
+        --muted: #6f665a;
+        --panel: #fffaf1;
+        --accent: #007a6f;
+        --danger: #b23b3b;
+      }
+      * { box-sizing: border-box; }
+      body {
+        margin: 0;
+        font-family: "Verdana", "Geneva", sans-serif;
+        background: linear-gradient(160deg, #fff3db 0%, #f3efe6 60%);
+        color: var(--ink);
+      }
+      header {
+        padding: 24px 16px 8px;
+        text-align: center;
+      }
+      header h1 { margin: 0; }
+      header p { margin: 8px 0 0; color: var(--muted); }
+      main { max-width: 980px; margin: 0 auto; padding: 16px; }
+      .grid {
+        display: grid;
+        grid-template-columns: 1fr;
+        gap: 16px;
+      }
+      @media (min-width: 900px) {
+        .grid { grid-template-columns: 1fr 1.2fr; }
+      }
+      .panel {
+        background: var(--panel);
+        border: 1px solid #e5d7c1;
+        border-radius: 14px;
+        padding: 18px;
+        box-shadow: 0 6px 16px rgba(0, 0, 0, 0.05);
+      }
+      label { display: block; font-size: 13px; color: var(--muted); margin-top: 10px; }
+      input, textarea {
+        width: 100%;
+        border: 1px solid #d9cbb7;
+        border-radius: 10px;
+        padding: 10px 12px;
+        background: #fffefb;
+        font-size: 14px;
+        color: var(--ink);
+      }
+      textarea { min-height: 180px; resize: vertical; }
+      .row { display: flex; gap: 8px; flex-wrap: wrap; margin-top: 12px; }
+      button {
+        border: none;
+        padding: 10px 16px;
+        border-radius: 999px;
+        cursor: pointer;
+        background: var(--accent);
+        color: white;
+        font-weight: 600;
+      }
+      button.secondary { background: #333; }
+      button.ghost { background: transparent; color: var(--accent); border: 1px solid var(--accent); }
+      button.danger { background: var(--danger); }
+      .list-item {
+        border-bottom: 1px dashed #d8c8b1;
+        padding: 10px 0;
+      }
+      .list-item h3 { margin: 0 0 4px; font-size: 16px; }
+      .list-item small { color: var(--muted); }
+      .count {
+        font-weight: 600;
+        color: var(--accent);
+      }
+      .hint { color: var(--muted); font-size: 12px; margin-top: 6px; }
+      .top-actions { text-align: center; margin-top: 10px; }
+      .top-actions a { color: var(--accent); text-decoration: none; }
+      @media (max-width: 680px) {
+        body { font-size: 15px; line-height: 1.6; }
+        header h1 { font-size: 22px; }
+        main { padding: 12px; }
+        .grid { grid-template-columns: 1fr; }
+        .panel { padding: 14px; }
+        input, textarea { font-size: 16px; }
+        button { width: 100%; }
+        .row { gap: 10px; }
+      }
+    </style>
+  </head>
+  <body>
+    <header>
+      <h1>Dream Log Editor</h1>
+      <p>Add posts locally, then export JSON or generate static pages every 15 posts.</p>
+      <div class="top-actions"><a href="index.html">Back to list</a></div>
+    </header>
+    <main>
+      <div class="grid">
+        <section class="panel">
+          <h2>New / Edit</h2>
+          <label>Title</label>
+          <input id="title" type="text" placeholder="Short title" />
+          <label>Date</label>
+          <input id="date" type="date" />
+          <label>Body</label>
+          <textarea id="body" placeholder="Write your dream memo..."></textarea>
+          <div class="row">
+            <button id="save">Save post</button>
+            <button id="reset" class="ghost">Reset form</button>
+            <button id="clear" class="danger">Clear all (local only)</button>
+          </div>
+          <p class="hint">All drafts are stored in your browser only (localStorage).</p>
+        </section>
+        <section class="panel">
+          <h2>Posts <span class="count" id="count">0</span></h2>
+          <div id="list"></div>
+          <div class="row">
+            <button id="load" class="ghost">Load from posts.json</button>
+            <button id="export" class="secondary">Export posts.json</button>
+            <button id="generate">Generate static pages</button>
+          </div>
+          <p class="hint">Static pages: index.html (page 1), page-2.html, page-3.html ...</p>
+          <p class="hint" id="status"></p>
+        </section>
+      </div>
+    </main>
+    <script src="admin.js"></script>
+  </body>
+</html>
+
+
+
+
